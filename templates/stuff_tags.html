@@ -1,0 +1,89 @@
+{% extends "main.html" %}
+{% block content %}
+<h2>Матрица преподавателей</h2>
+
+<div class="row text-center">
+    <style>
+    </style>
+
+    <div class="row text-center">
+        <div class="card" style="width: 100%;">
+            <div class="card-body">
+                <p><a href="/models/{{name}}/" class="card-link">Вернуться к обзору модели</a></p>
+                {% if matrix %}
+                <p class="card-text">
+                    Ниже вы можете ознакомиться с подробной таблицей соответствия преподавателей компетенциям.
+                    Для редактирования таблицы рекомендуем скачать ее по клику на зеленой кнопке,
+                    отредактировать в табличном редакторе, и загрузить новую по клику на желтой кнопке внизу.
+                </p>
+                <p>
+                    Для формирования новой таблицы из данных ЕИС вы можете воспользоваться
+                    <a href="">
+                        шаблоном</a>.
+
+                </p>
+
+                <div style="overflow-x:auto; height: 500px" class="mb-3">
+                    {{matrix|safe}}
+                </div>
+                <a href="/models/{{name}}/dwn/stuff" class="btn btn-success">Скачать таблицу</a>
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal">
+                    Заменить таблицу
+                </button>
+
+                {% else %}
+                <p class="card-text">
+                    В модели отсутствует информация о соответствии преподавателей компетенциям.
+                    Пожалуйста, загрузите ее для дальнейшего расчета.
+                </p><p>
+                    Для формирования правильной таблицы вы можете воспользоваться
+                    <a href="/models/{{name}}/dwn/stuff_tags_tmpl">
+                        шаблоном</a>.
+
+                </p>
+
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal">
+                    Загрузить таблицу
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form method=post enctype=multipart/form-data>
+                        <div class="modal-header">
+                            <h5 class="modal-title">Загрузка таблицы</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type=file name=stuffFile>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                            <input type="submit" class="btn btn-primary" value="Загрузить"/>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+</div>
+
+{% endblock %}
+
+{% block bottom_nav %}
+
+{% if courses and stuff and tags and matrix%}
+<div class="row text-center" class="mb-5">
+    <div class="col-sm">
+        <a href="/models/{{name}}/solve" class="btn btn-success btn-lg" type="submit">Рассчитать нагрузку</a>
+    </div>
+</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "main.html" %}
+{% block content %}
+<h2>Добавление новой модели</h2>
+
+<form method="POST" enctype=multipart/form-data>
+  <div class="form-group">
+    <label for="model_name">Имя модели</label>
+    <input type="text" class="form-control" id="model_name" placeholder="model_name" name="model_name" value="test">
+  </div>
+{% endblock %}
+
+{% block bottom_nav %}
+<div class="row text-center">
+    <div class="col-sm">
+        <button type="submit" class="btn btn-warning">Создать модель</button>
+    </div>
+    <div class="col-sm">
+        <a href="/" class="btn btn-danger">Отмена</a>
+    </div>
+</div>
+</form>
+{% endblock %}

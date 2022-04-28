@@ -1,0 +1,42 @@
+{% extends "main.html" %}
+{% block content %}
+
+<div>
+    <h2>Ошибка сопоставления</h2>
+
+    <p>
+        {{msg}}
+    </p>
+
+    <table>
+        <thead>
+        <tr>
+            <th> {{l_msg}}</th>
+            <th> {{r_msg}} </th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                {% for item in left %}
+                {{item}}<br>
+                {% endfor %}
+            </td>
+            <td>
+                {% for item in right %}
+                {{item}}<br>
+                {% endfor %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block bottom_nav %}
+
+<div class="row text-center" class="mb-5">
+    <div class="col-sm">
+        <a href="{{link}}" class="btn btn-danger btn-lg" type="submit">Продолжить</a>
+    </div>
+</div>
+{% endblock %}
