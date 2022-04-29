@@ -1,10 +1,10 @@
 """ Тестовый файл. Содержит тестовые прогоны модели
 """
+import logging
 import pickle
 
 import pandas as pd
 from pulp import *
-import logging
 
 from Model import Model
 
@@ -45,7 +45,7 @@ def exec_toy():
 
     model.calc_method_stuff()
     # model._solve_test()
-    model.solve_gad()
+    model.solve_gad(generations=20, population=20)
     with open('./models/toy', 'wb') as f:
         pickle.dump(model, f)
 
@@ -61,7 +61,7 @@ def exec_2023():
     model.calc_courses_tags()
     model.calc_method_stuff()
 
-    model.solve_gad(generations=100, population=500)
+    # model.solve_gad(generations=100, population=500)
 
     with open('./models/2023', 'wb') as f:
         pickle.dump(model, f)
@@ -70,7 +70,7 @@ def exec_2023():
 def main():
     """ точка входа
     """
-    exec_toy()
+    exec_2023()
 
 
 if __name__ == '__main__':

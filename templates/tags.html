@@ -1,0 +1,185 @@
+{% extends "main.html" %}
+{% block content %}
+
+<h2>Редактирование иерархии компетенций</h2>
+
+{% endblock %}
+
+{% block bottom_nav %}
+<div class="row text-center mb-5">
+
+    <section style="padding: 10px;">
+
+        <p>Drag the equipment nodes with the mouse. Equipment nodes can be arranged in any level of hierarchy under
+            a facility. Facilities cannot be moved. A parent cannot be dragged under one of it's descendants.</p>
+
+        <p>Double click to edit the label of a node.</p>
+
+        <ul id="dragRoot">
+            <li><i class="icon-building"></i> <span class="node-facility">Facility F1</span>
+                <ul>
+                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A</span>
+                        <ul>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A1</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A2</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A3</span></li>
+                        </ul>
+                    </li>
+                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B</span>
+                        <ul>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B1</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B2</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B3</span></li>
+                        </ul>
+                    </li>
+                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C</span>
+                        <ul>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C1</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C2</span></li>
+                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C3</span></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><i class="icon-building"></i> <span class="node-facility">Facility F2</span></li>
+            <li><i class="icon-building"></i> <span class="node-facility">Facility F3</span></li>
+        </ul>
+
+    </section>
+
+</div>
+<script>
+    var DragAndDrop = (function (DragAndDrop) {
+
+        function shouldAcceptDrop(item) {
+
+            var $target = $(this).closest("li");
+            var $item = item.closest("li");
+
+            if ($.contains($item[0], $target[0])) {
+                // can't drop on one of your children!
+                return false;
+            }
+
+            return true;
+
+        }
+
+        function itemOver(event, ui) {
+        }
+
+        function itemOut(event, ui) {
+        }
+
+        function itemDropped(event, ui) {
+
+            var $target = $(this).closest("li");
+            var $item = ui.draggable.closest("li");
+
+            var $srcUL = $item.parent("ul");
+            var $dstUL = $target.children("ul").first();
+
+            // destination may not have a UL yet
+            if ($dstUL.length == 0) {
+                $dstUL = $("<ul></ul>");
+                $target.append($dstUL);
+            }
+
+            $item.slideUp(50, function () {
+
+                $dstUL.append($item);
+
+                if ($srcUL.children("li").length == 0) {
+                    $srcUL.remove();
+                }
+
+                $item.slideDown(50, function () {
+                    $item.css('display', '');
+                });
+
+            });
+
+        }
+
+        DragAndDrop.enable = function (selector) {
+
+            $(selector).find(".node-cpe").draggable({
+                helper: "clone"
+            });
+
+            $(selector).find(".node-cpe, .node-facility").droppable({
+                activeClass: "active",
+                hoverClass: "hover",
+                accept: shouldAcceptDrop,
+                over: itemOver,
+                out: itemOut,
+                drop: itemDropped,
+                greedy: true,
+                tolerance: "pointer"
+            });
+
+        };
+
+        return DragAndDrop;
+
+    })(DragAndDrop || {});
+
+    (function ($) {
+
+        $.fn.beginEditing = function (whenDone) {
+
+            if (!whenDone) {
+                whenDone = function () {
+                };
+            }
+
+            var $node = this;
+            var $editor = $("<input type='text' style='width:auto; min-width: 25px;'></input>");
+            var currentValue = $node.text();
+
+            function commit() {
+                $editor.remove();
+                $node.text($editor.val());
+                whenDone($node);
+            }
+
+            function cancel() {
+                $editor.remove();
+                $node.text(currentValue);
+                whenDone($node);
+            }
+
+            $editor.val(currentValue);
+            $editor.blur(function () {
+                commit();
+            });
+            $editor.keydown(function (event) {
+                if (event.which == 27) {
+                    cancel();
+                    return false;
+                } else if (event.which == 13) {
+                    commit();
+                    return false;
+                }
+            });
+
+            $node.empty();
+            $node.append($editor);
+            $editor.focus();
+            $editor.select();
+
+        };
+
+    })(jQuery);
+
+    $(function () {
+        DragAndDrop.enable("#dragRoot");
+
+        $(document).on("dblclick", "#dragRoot *[class*=node]", function () {
+            $(this).beginEditing();
+        });
+
+    });
+
+</script>
+{% endblock %}

@@ -3,121 +3,141 @@
 <h2>Модель расчета нагрузки</h2>
 
 <div class="row text-center">
-    <div class="row text-center">
-        <div class="card" style="width: 33%;">
-            <div class="card-body">
-                <h5 class="card-title">Дисциплины</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Распределение нагрузки по методическим единицам</h6>
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Наргузка преподавателей</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Список преподавателей и их общая нагрузка в часах</h6>
 
-                {% if courses %}
-                <p class="card-text">Всего дисциплин: {{num_courses}}</p>
-                <p class="card-text">Суммарная нагрузка по дисциплинам: {{hours_courses}}</p>
-                <a href="/models/{{name}}/edit/courses" class="btn btn-primary">Редактировать</a>
-                {% else %}
-                <p class="card-text">В модели отсутствует информация о нагрузке по дисциплинам. Пожалуйста, загрузите ее
-                    для дальнейшего расчета.</p>
-                <a href="/models/{{name}}/edit/courses" class="card-link">Загрузить</a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card" style="width: 33%;">
-            <div class="card-body">
-                <h5 class="card-title">Преподаватели</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Список преподавателей и их общая нагрузка в часах</h6>
-
-                {% if courses %}
-                <p class="card-text">Всего преподавателей: {{num_stuff}}</p>
-                <p class="card-text">Суммарная нагрузка преподавателей: {{hours_stuff}}</p>
-                <a href="/models/{{name}}/edit/stuff" class="btn btn-primary">Редактировать</a>
-                {% else %}
-                <p class="card-text">В модели отсутствует информация о нагрузке по преподавателям.
-                    Пожалуйста, загрузите ее для дальнейшего расчета.</p>
-                <a href="/models/{{name}}/edit/stuff" class="card-link">Загрузить</a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card" style="width: 33%;">
-            <div class="card-body">
-                <h5 class="card-title">Компетенции</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Список тегов, обозначающих компетенции.</h6>
-
-                {% if tags %}
-                <p class="card-text">Всего тегов: {{tags}}</p>
-                <!--                <p class="card-text">Суммарная нагрузка преподавателей: {{hours_stuff}}</p>-->
-                <a href="/models/{{name}}/edit/tags" class="btn btn-secondary">Редактировать</a>
-                {% else %}
-                <p class="card-text">В модели отсутствует информация о компетенциях.</p>
-                <a href="/models/{{name}}/edit/tags" class="card-link">Загрузить</a>
-                {% endif %}
-            </div>
+            {% if courses %}
+            <p class="card-text">Всего преподавателей: {{num_stuff}}</p>
+            <p class="card-text">Суммарная нагрузка преподавателей: {{hours_stuff}}</p>
+            <a class="btn btn-primary" href="/models/{{name}}/edit/stuff">Редактировать</a>
+            {% else %}
+            <p class="card-text">В модели отсутствует информация о нагрузке по преподавателям.
+                Пожалуйста, загрузите ее для дальнейшего расчета.</p>
+            <a class="card-link" href="/models/{{name}}/edit/stuff">Загрузить</a>
+            {% endif %}
         </div>
     </div>
 
-    <div class="row text-center mx-auto">
-        <div class="card" style="width: 50%;">
-            <div class="card-body">
-                <h5 class="card-title">Матрица преподавателей</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Соответствие преподавателей компетенциям</h6>
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Нагрука по дисциплинам</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Распределение нагрузки по методическим единицам</h6>
 
-                {% if matrix %}
-                <a href="/models/{{name}}/edit/stuff_tags" class="btn btn-primary">Редактировать</a>
-                {% else %}
-                <p class="card-text">В модели отсутствует информация о компетенциях преподавателей.
-                    Пожалуйста, загрузите ее для дальнейшего расчета.</p>
-                <a href="/models/{{name}}/edit/stuff_tags" class="card-link">Загрузить</a>
-                {% endif %}
-            </div>
-        </div>
-        <div class="card" style="width: 50%;">
-            <div class="card-body">
-                <h5 class="card-title">Матрица дисциплин</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Соответствие методических единиц компетенциям</h6>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                    card's content.</p>
-
-                {% if courses %}
-                <a href="/models/{{name}}/dwn/tags" class="card-link">Скачать таблицу</a>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCoursesTags">
-                    Заменить таблицу
-                </button>
-                {% else %}
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCoursesTags">
-                    Загрузить таблицу
-                </button>
-                {% endif %}
-                <a href="/models/{{name}}/generate" class="card-link">По дисциплинам</a>
-            </div>
+            {% if courses %}
+            <p class="card-text">Всего дисциплин: {{num_courses}}</p>
+            <p class="card-text">Суммарная нагрузка по дисциплинам: {{hours_courses}}</p>
+            <a class="btn btn-primary" href="/models/{{name}}/edit/courses">Редактировать</a>
+            {% else %}
+            <p class="card-text">В модели отсутствует информация о нагрузке по дисциплинам. Пожалуйста, загрузите ее
+                для дальнейшего расчета.</p>
+            <a class="card-link" href="/models/{{name}}/edit/courses">Загрузить</a>
+            {% endif %}
         </div>
     </div>
+</div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="modalCoursesTags" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form method=post enctype=multipart/form-data>
-                    <div class="modal-header">
-                        <h5 class="modal-title">Загрузка таблицы</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <input type=file name="courses">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                        <input type="submit" class="btn btn-primary" value="Загрузить"/>
-                    </div>
-                </form>
-            </div>
+
+<div class="row text-center">
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Компетенции преподавателей</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Соответствие преподавателей компетенциям</h6>
+
+            {% if matrix %}
+            <a class="btn btn-primary" href="/models/{{name}}/edit/stuff_tags">Редактировать</a>
+            {% else %}
+            <p class="card-text">В модели отсутствует информация о компетенциях преподавателей.
+                Пожалуйста, загрузите ее для дальнейшего расчета.</p>
+            <a class="card-link" href="/models/{{name}}/edit/stuff_tags">Загрузить</a>
+            {% endif %}
         </div>
     </div>
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Иерархия компетенций</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Список тегов, обозначающих компетенции.</h6>
 
-    <div style="overflow-x:auto;" class="mb-5">
+            {% if tags %}
+            <p class="card-text">Всего тегов: {{tags}}</p>
+            <!--                <p class="card-text">Суммарная нагрузка преподавателей: {{hours_stuff}}</p>-->
+            <a class="btn btn-secondary" href="/models/{{name}}/edit/tags">Редактировать</a>
+            {% else %}
+            <p class="card-text">В модели отсутствует информация о компетенциях.</p>
+            <a class="card-link" href="/models/{{name}}/edit/tags">Загрузить</a>
+            <a class="btn btn-warning" href="/models/{{name}}/generate">По дисциплинам</a>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+<div class="row text-center">
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Матрица дисциплин</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Соответствие методических единиц компетенциям</h6>
+            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                card's content.</p>
+
+            {% if courses %}
+            <a class="card-link" href="/models/{{name}}/dwn/tags">Скачать таблицу</a>
+            <button class="btn btn-primary" data-target="#modalCoursesTags" data-toggle="modal" type="button">
+                Заменить таблицу
+            </button>
+            {% else %}
+            <button class="btn btn-primary" data-target="#modalCoursesTags" data-toggle="modal" type="button">
+                Загрузить таблицу
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card" style="width: 50%;">
+        <div class="card-body">
+            <h5 class="card-title">Прошлогодняя нагрузка</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Соответствие методических единиц компетенциям</h6>
+            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                card's content.</p>
+
+            {% if courses %}
+            <a class="card-link" href="/models/{{name}}/dwn/tags">Скачать таблицу</a>
+            <button class="btn btn-primary" data-target="#modalCoursesTags" data-toggle="modal" type="button">
+                Заменить таблицу
+            </button>
+            {% else %}
+            <button class="btn btn-primary" data-target="#modalCoursesTags" data-toggle="modal" type="button">
+                Загрузить таблицу
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="modalCoursesTags" role="dialog"
+     tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form enctype=multipart/form-data method=post>
+                <div class="modal-header">
+                    <h5 class="modal-title">Загрузка таблицы</h5>
+                    <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input name="courses" type=file>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button">Закрыть</button>
+                    <input class="btn btn-primary" type="submit" value="Загрузить"/>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="mb-5" style="overflow-x:auto;">
 </div>
 
 {% endblock %}
@@ -126,8 +146,8 @@
 
 <div class="row text-center mb-5">
     <div class="col-sm">
-        <a href="#" class="btn btn-secondary btn-lg" type="submit">Подбор замен</a>
-        <a href="#" class="btn btn-secondary btn-lg" type="submit">Дефицитные навыки</a>
+        <a class="btn btn-success btn-lg" href="/models/{{name}}/find_stuff" type="submit">Подбор замен</a>
+        <a class="btn btn-success btn-lg" href="/models/{{name}}/head_hunt" type="submit">Дефицитные навыки</a>
         <a href="#" class="btn btn-secondary btn-lg" type="submit">Рассчитать нагрузку</a>
         <a href="/models/{{name}}/results" class="btn btn-success btn-lg" type="submit">Результаты расчета</a>
     </div>

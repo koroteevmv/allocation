@@ -1,0 +1,27 @@
+{% extends "main.html" %}
+{% block content %}
+<h2>Дефицитные навыки</h2>
+
+<p><a class="card-link" href="/models/{{name}}/">Вернуться к обзору модели</a></p>
+
+<div class="row text-center">
+</div>
+
+{{data|safe}}
+
+
+{% endblock %}
+
+{% block bottom_nav %}
+<div class="mb-5" style="overflow-x:auto;">
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#T_my_id2').DataTable({
+            "order": [[3, 'asc']],
+        });
+    });
+</script>
+
+{% endblock %}

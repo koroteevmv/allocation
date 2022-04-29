@@ -233,7 +233,7 @@ def stuff_tags(name):
     log.debug(model.stuff_tag)
 
     try:
-        matrix = model.stuff_tag.iloc[:, :15].to_html(index=True, table_id="T_my_id", classes='table table-striped',
+        matrix = model.stuff_tag.iloc[:, :10].to_html(index=True, table_id="T_my_id", classes='table table-striped',
                                                       border=0)
     except AttributeError:
         matrix = ''
@@ -274,7 +274,7 @@ def results(name):
                                                              classes='table table-striped', border=0,
                                                              float_format='%10.2f')
 
-    return render_template('solve.html',
+    return render_template('results.html',
                            name=name,
                            data=data,
                            data3=data3,
@@ -325,6 +325,69 @@ def generate_anyway(name):
     #     pickle.dump(model, f)
     return redirect(f'/models/{name}')
 
+
+@app.route('/models/<name>/edit/tags')
+def tags(name):
+    filename = os.path.join('models', name)
+    with open(filename, 'rb') as f:
+        model = pickle.load(f)
+
+    model.calc_courses_tags()
+
+    # with open(filename, 'wb') as f:
+    #     pickle.dump(model, f)
+    return render_template('tags.html',
+                           name=name,
+                           )
+
+
+@app.route('/models/<name>/find_stuff')
+def find_stuff(name):
+    filename = os.path.join('models', name)
+    with open(filename, 'rb') as f:
+        model = pickle.load(f)
+
+    res = model.stuff_tag.dot(model.courses_tags.T).T.iloc[:, :].div(model.courses_tags.T.sum(axis=0), axis=0)
+    res = res.melt(ignore_index=False)
+    res = res.reset_index()
+    res = res[res.value > 0]
+    res.columns = ["Преподаватель", "Дисциплина", "Соответствие"]
+    res = res[["Дисциплина", "Преподаватель", "Соответствие"]]
+    res = res.to_html(index=False, table_id="T_my_id2",
+                      classes='table table-striped', border=0,
+                      float_format='{0:.0%}'.format)
+    return render_template('find_stuff.html',
+                           name=name,
+                           data=res,
+                           )
+
+
+@app.route('/models/<name>/head_hunt')
+def head_hunt(name):
+    filename = os.path.join('models', name)
+    with open(filename, 'rb') as f:
+        model = pickle.load(f)
+
+    # log.debug(model.list_tags)
+    res = pd.DataFrame(index=model.list_tags.tag, columns=["Компетенция", "Требуется", "Есть", "Дефицит"])
+    res["Компетенция"] = res.index
+    res["Требуется"] = (model.courses_tags.T.dot(model.method_hours.groupby("course").sum()))['hours']
+    # log.debug(model.stuff_tag)
+    # log.debug(model.stuff_hours)
+    # log.debug(model.stuff_tag.T.dot(model.stuff_hours))
+    res["Есть"] = (model.stuff_tag.T.dot(model.stuff_hours))['opt']
+    res["Дефицит"] = res["Есть"] - res["Требуется"]
+    # log.debug(res)
+    res = res.to_html(index=False, table_id="T_my_id2",
+                      classes='table table-striped', border=0,
+                      float_format='%10.2f')
+    return render_template('head_hunt.html',
+                           name=name,
+                           data=res,
+                           )
+
+
+# TODO pfuheprf ghjikjujlytq vjltkb
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True, host='0.0.0.0')

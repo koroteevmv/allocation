@@ -1,6 +1,7 @@
 """Класс модели рассчета
 """
 import logging
+from random import randint
 
 import numpy as np
 import pandas as pd
@@ -34,19 +35,19 @@ class Model(object):
             
         list_stuff:
             Список преподавателей модели. Эта таблица вычисляется из поля stuff_hours и в дальнейшем
-            держится в актуальном состоянии (например, при добавлении преподавателей из таблицы предпочтений).                
-            
-        courses_tags:
-            Матрица соответствия дисциплин тегам. Эта матрица загружается в модель на втором этапе.
-            По строкам - дисциплины, по колонкам - теги.
-            
+            держится в актуальном состоянии (например, при добавлении преподавателей из таблицы предпочтений).
+
         stuff_tag:
             Таблица соответствия преподавателей тегам. Эта матрица загружается в модель на втором этапе.
             По строкам - преподаватели, по колонкам - теги.
             Список преподавателей должен соответствовать полям list_stuff и stuff_hours
 
-        list_tags: 
-            Список тегов (компетенций) модели. Эта таблица автоматически вычисляется из поля courses_tags
+        list_tags:
+            Список тегов (компетенций) модели. Эта таблица автоматически вычисляется из поля stuff_tag
+            
+        courses_tags:
+            Матрица соответствия дисциплин тегам. Эта матрица загружается в модель на третьем этапе.
+            По строкам - дисциплины, по колонкам - теги.
 
         method_tags:
             Соответствие методических единиц тегам модели. Эта таблица автоматически вычисляется из полей
@@ -198,10 +199,12 @@ class Model(object):
                 log.warning(f"Список дисциплин отличается:\n{self.list_courses}\n{res.index}")
                 raise ValueError
         if self.list_tags is None:
-            self.list_tags = pd.Series(res.columns)
+            self.list_tags = pd.DataFrame(res.columns, columns=['tag'])
+            self.list_tags["parent"] = None
             log.info("Заполнен список тегов")
+            log.debug(self.list_tags)
         else:
-            if not self.list_tags.equals(pd.Series(res.columns)):
+            if not self.list_tags.tag.equals(pd.Series(res.columns)):
                 log.warning("Список тегов отличается:", self.list_tags, pd.Series(res.columns))
                 raise ValueError
 
@@ -234,10 +237,12 @@ class Model(object):
                 self.list_stuff = self.stuff_hours.index
 
         if self.list_tags is None:
-            self.list_tags = pd.Series(res.columns)
+            self.list_tags = pd.DataFrame(res.columns, columns=['tag'])
+            self.list_tags["parent"] = None
             log.info("Заполнен список тегов")
+            log.debug(self.list_tags)
         else:
-            if not self.list_tags.equals(pd.Series(res.columns)):
+            if not self.list_tags.tag.equals(pd.Series(res.columns)):
                 log.warning("Список тегов отличается.")
                 raise ValueError
             else:
@@ -247,23 +252,6 @@ class Model(object):
         log.debug(self.stuff_tag)
         return self
 
-    def calc_method_stuff(self):
-        """ Вычисление матрицы соответствия методических единиц преподавателям (итоговая матрица штрафов).
-
-        Матрица вычисляется из полей method_hours и courses_tags.
-        """
-        res = pd.DataFrame(index=self.method_hours.index, columns=self.list_tags)
-        res = res.apply(lambda x: self.courses_tags.loc[self.method_hours.loc[x.name].course], axis=1)
-        self.method_tags = res
-
-        teacher_x_discipline = self.stuff_tag.dot(self.method_tags.T)
-        penalty_matrix = teacher_x_discipline.T.iloc[:, :].div(res.T.sum(axis=0), axis=0)
-        log.info("Вычислена итоговая матрица штрафов")
-        self.method_stuff = penalty_matrix
-        # penalty_matrix.index =
-        log.debug(penalty_matrix)
-        return penalty_matrix
-
     def calc_courses_tags(self):
         """Вычисление матрицы courses_tags из поля stuff_tag.
 
@@ -271,7 +259,11 @@ class Model(object):
         названия дисциплин
         """
         log.info("Запущен процесс генерации единичной матрицы дисциплин")
-        tags = list(self.list_tags)
+        log.debug(self.stuff_tag)
+        log.debug(self.list_tags)
+        log.debug(self.list_courses)
+        log.debug(self.method_hours)
+        tags = list(self.list_tags.tag)
         courses = list(self.list_courses)
         if tags != courses:
             log.warning("Список дисциплин и тегов отличается!")
@@ -282,9 +274,14 @@ class Model(object):
             [log.warning(f"\t{x}") for x in sorted(one.difference(two))]
 
             log.debug(self.stuff_tag.shape)
-            self.stuff_tag = (self.stuff_tag.T.reindex(self.list_courses).fillna(0.5)).T
+            self.stuff_tag = (self.stuff_tag.T.reindex(self.list_courses).fillna(0.0)).T
+            log.debug(self.stuff_tag)
             log.debug(self.stuff_tag.shape)
-            self.list_tags = self.list_courses
+            # self.list_tags = self.list_courses
+            self.list_tags = pd.DataFrame(list(self.list_courses), columns=['tag'])
+            self.list_tags["parent"] = None
+            log.debug(self.list_courses)
+            log.debug(self.list_tags.tag)
 
         i = pd.DataFrame(np.identity(len(self.list_courses)),
                          columns=self.list_courses,
@@ -293,6 +290,27 @@ class Model(object):
         self.courses_tags = i
 
         return self
+
+    def calc_method_stuff(self):
+        """ Вычисление матрицы соответствия методических единиц преподавателям (итоговая матрица штрафов).
+
+        Матрица вычисляется из полей method_hours и courses_tags.
+        """
+        res = pd.DataFrame(index=self.method_hours.index, columns=self.list_tags.tag)
+        res = res.apply(lambda x: self.courses_tags.loc[self.method_hours.loc[x.name].course], axis=1)
+        self.method_tags = res
+        log.info("Вычисляется итоговая матрица штрафов")
+        log.debug(self.list_tags)
+
+        log.debug(self.stuff_tag)
+        log.debug(self.method_tags)
+        method_stuff = self.stuff_tag.dot(self.method_tags.T)
+        method_stuff = method_stuff.T.iloc[:, :].div(res.T.sum(axis=0), axis=0)
+        log.info("Вычислена итоговая матрица штрафов")
+        self.method_stuff = method_stuff
+        # penalty_matrix.index =
+        log.debug(method_stuff)
+        return method_stuff
 
     def _solve_pulp(self):
         """ Поиск наилучшего распределения методом транспортной задачи.
@@ -398,18 +416,18 @@ class Model(object):
             print("Generation : ", ga_instance_.generations_completed)
             print("Fitness of the best solution :", ga_instance_.best_solution()[1])
 
-        # def mutation_func(offspring, ga_instance_):
-        #     for chromosome_idx in range(offspring.shape[0]):
-        #         series = list(self.generate_result(offspring[chromosome_idx])["fitness"])
-        #         fitness_sorted = sorted(list(range(len(series))), key=lambda k: series[k])
-        #         random_gene_idx = np.random.choice(fitness_sorted[:25])
-        #         offspring[chromosome_idx, random_gene_idx] = randint(0, len(self.list_stuff) - 1)
-        #     return offspring
+        def mutation_func(offspring, ga_instance_):
+            for chromosome_idx in range(offspring.shape[0]):
+                series = list(self.evaluate_result(offspring[chromosome_idx])["fitness"])
+                fitness_sorted = sorted(list(range(len(series))), key=lambda k: series[k])
+                random_gene_idx = np.random.choice(fitness_sorted[:25])
+                offspring[chromosome_idx, random_gene_idx] = randint(0, len(self.list_stuff) - 1)
+            return offspring
 
         log.debug(f"Количество методических единиц: {len(self.method_hours.index)}")
         log.debug(f"Количество преподавателей: {len(self.list_stuff)}")
         ga_instance = pygad.GA(num_generations=generations,
-                               num_parents_mating=int(population/2),
+                               num_parents_mating=int(population / 2),
                                sol_per_pop=population,
 
                                num_genes=len(self.method_hours.index),
@@ -426,7 +444,7 @@ class Model(object):
                                stop_criteria=["reach_1.0", "saturate_5"],
                                parent_selection_type="rank",
                                crossover_type="scattered",
-                               # mutation_type=mutation_func,  # "random",
+                               mutation_type=mutation_func,  # "random",
                                # mutation_probability=0.01,
                                )
         ga_instance.run()
@@ -463,8 +481,8 @@ class Model(object):
         series["f_dist"][series["f_dist"] <= 1] = 1
         series["f_dist"][series["f_dist"] > 1] = 0
 
-        log.debug(series.index)
-        log.debug(self.stuff_hours.index[series.stuff])
+        # log.debug(series.index)
+        # log.debug(self.stuff_hours.index[series.stuff])
         series["f_skill"] = self.method_stuff.lookup(series.index, self.stuff_hours.index[series.stuff])
 
         series["fitness"] = (series["f_dist"] * series["f_skill"])
