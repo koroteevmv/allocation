@@ -14,8 +14,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 
-pd.set_option('display.max_columns', 15)
-pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', 10)
 pd.set_option('display.width', 1000)
 
 
@@ -45,7 +44,8 @@ def exec_toy():
     model.read_stuff_tag(pd.read_csv("sample_data/toy/stuff_tags.csv", index_col=0).T.fillna(0.0).sort_index())
 
     model.calc_method_stuff()
-    model._solve_test()
+    # model._solve_test()
+    model.solve_gad()
     with open('./models/toy', 'wb') as f:
         pickle.dump(model, f)
 
@@ -57,8 +57,12 @@ def exec_2023():
     model.read_courses_hours(pd.read_csv("sample_data/2023/courses.csv", index_col=0).fillna(0.0).sort_index())
     model.read_stuff_hours(pd.read_csv("sample_data/2023/stuff.csv", index_col=0).fillna(0.0).sort_index())
     model.read_stuff_tag(pd.read_csv("sample_data/2023/stuff_matrix.csv", index_col=0).fillna(0.0).sort_index())
+
     model.calc_courses_tags()
-    model.solve_gad()
+    model.calc_method_stuff()
+
+    model.solve_gad(generations=100, population=500)
+
     with open('./models/2023', 'wb') as f:
         pickle.dump(model, f)
 
@@ -66,7 +70,7 @@ def exec_2023():
 def main():
     """ точка входа
     """
-    exec_small()
+    exec_toy()
 
 
 if __name__ == '__main__':
