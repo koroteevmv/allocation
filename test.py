@@ -27,9 +27,11 @@ def exec_small():
     model.read_courses_tags(pd.read_csv("sample_data/small/courses_tags.csv", index_col=0).fillna(0.0).sort_index())
     model.read_stuff_tag(pd.read_csv("sample_data/small/stuff_tags.csv", index_col=0).fillna(0.0).sort_index())
 
+    # model.calc_courses_tags()
     model.calc_method_stuff()
-    model._solve_test()
-    # model.solve_gad()
+    #
+    # model._solve_test()
+    model.solve_gad()
     with open('./models/small', 'wb') as f:
         pickle.dump(model, f)
 
@@ -45,7 +47,7 @@ def exec_toy():
 
     model.calc_method_stuff()
     # model._solve_test()
-    model.solve_gad(generations=20, population=20)
+    model.solve_gad()
     with open('./models/toy', 'wb') as f:
         pickle.dump(model, f)
 
@@ -70,7 +72,7 @@ def exec_2023():
 def main():
     """ точка входа
     """
-    exec_2023()
+    exec_small()
 
 
 if __name__ == '__main__':
