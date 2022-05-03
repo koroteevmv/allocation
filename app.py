@@ -25,6 +25,8 @@ def home():
         ).strftime('%Y-%m-%d %H:%M:%S')
     } for f in os.listdir('./models') if os.path.isfile(os.path.join('./models', f))]
     log.debug(res)
+    # TODO сортировка по убыванию даты
+    # TODO красивая таблица
     return render_template('model_list.html', models=res)
 
 
@@ -48,41 +50,38 @@ def model(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    log.debug(model.stuff_tags)
-    stuff = ''
-    hours_stuff = 0
-    num_stuff = 0
-    courses = ''
-    hours_courses = 0
-    num_courses = 0
+    # TODO добавить метод POST для загрузки таблиц из модальных окон
 
-    try:
-        stuff = model.stuff_hours.style.format('<span>{}<span>').render()
-        hours_stuff = model.stuff_hours.opt.sum()
-        num_stuff = len(model.list_stuff)
-    except AttributeError:
-        stuff = ''
-        hours_stuff = 0
-        num_stuff = 0
-    try:
-        courses = model.method_hours.style.format('<span>{}<span>').render()
-        hours_courses = model.method_hours.hours.sum()
-        num_courses = len(model.list_courses)
-    except AttributeError:
-        courses = ''
-        hours_courses = 0
-        num_courses = 0
-    try:
-        tags = len(model.list_tags)
-    except:
-        tags = 0
-    try:
-        matrix = model.stuff_tags.iloc[:, 0:15].style.format('<span>{}<span>').render()
-    except AttributeError:
-        matrix = ''
+    courses_hours = True if model.method_hours is not None else False
+    hours_courses = model.method_hours.hours.sum() if courses_hours else 0
+    num_courses = len(model.list_courses) if courses_hours else 0
 
-    return render_template('model_main.html',
-                           stuff=stuff, courses=courses, tags=tags, matrix=matrix, name=name,
+    stuff_hours = True if model.stuff_hours is not None else False
+    hours_stuff = model.stuff_hours.opt.sum() if stuff_hours else 0
+    num_stuff = len(model.stuff_hours.index) if stuff_hours else 0
+
+    tags = len(model.courses_tags) if model.courses_tags is not None else 0
+
+    stuff_tags = True if model.stuff_tags is not None else False
+
+    method_tags = True if model.method_tags is not None else False
+
+    last_solution = True if model.last_solution is not None else False
+
+    method_stuff = True if model.method_stuff is not None else False
+
+    solution = True if model.solution is not None else False
+
+    return render_template('model_main.html', name=name,
+                           stuff_hours=stuff_hours,
+                           courses=courses_hours,
+                           tags=tags,
+                           stuff_tags=stuff_tags,
+                           method_tags=method_tags,
+                           last_solution=last_solution,
+                           method_stuff=method_stuff,
+                           solution=solution,
+
                            hours_stuff=hours_stuff,
                            hours_courses=hours_courses,
                            num_stuff=num_stuff,
@@ -115,6 +114,10 @@ def dwn(name, component):
         log.debug(res)
     elif component == "solution":
         res = model.result
+    elif component == "last":
+        res = model.last_solution
+    elif component == "method_stuff":
+        res = model.method_stuff
 
     res.to_excel(path)
 
@@ -262,17 +265,22 @@ def results(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    data = model.result.drop([
-        "real", "opt", "stuff",
-    ], axis=1).sort_index().to_html(index=False, table_id="T_my_id", classes='table table-striped', border=0,
-                                    float_format='%10.2f')
+    data = model.result
+    data3 = None
+    # TODO добавить вывод итоговой эффективности распределения
 
-    data3 = model.result.drop([
-        "stuff", "hours",
-        # "real", "opt", "stuff",
-    ], axis=1).groupby(['name']).mean().sort_index().to_html(index=True, table_id="T_my_id2",
-                                                             classes='table table-striped', border=0,
-                                                             float_format='%10.2f')
+    if data:
+        data = model.result.drop([
+            "real", "opt", "stuff",
+        ], axis=1).sort_index().to_html(index=False, table_id="T_my_id", classes='table table-striped', border=0,
+                                        float_format='%10.2f')
+
+        data3 = model.result.drop([
+            "stuff", "hours",
+            # "real", "opt", "stuff",
+        ], axis=1).groupby(['name']).mean().sort_index().to_html(index=True, table_id="T_my_id2",
+                                                                 classes='table table-striped', border=0,
+                                                                 float_format='%10.2f')
 
     return render_template('results.html',
                            name=name,
@@ -287,7 +295,7 @@ def generate(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    tags = list(model.list_tags)
+    tags = list(model.list_tags.tag)
     courses = list(model.list_courses)
     if tags != courses:
         one, two = set(tags), set(courses)

@@ -34,9 +34,10 @@
 
 {% block bottom_nav %}
 
-<div class="row text-center" class="mb-5">
-    <div class="col-sm">
-        <a href="{{link}}" class="btn btn-danger btn-lg" type="submit">Продолжить</a>
+    <div class="row text-center" class="mb-5">
+        <div class="col-sm">
+            <a href="{{ link }}" class="btn btn-danger btn-lg" type="submit">Продолжить</a>
+            <a href="/models/{{ name }}/" class="btn btn-primary btn-lg" type="submit">Вернуться</a>
+        </div>
     </div>
-</div>
 {% endblock %}

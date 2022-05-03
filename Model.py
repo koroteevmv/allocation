@@ -36,10 +36,8 @@ class Model(object):
             Таблица соответствия преподавателей тегам. Эта матрица загружается в модель на втором этапе.
             По строкам - преподаватели, по колонкам - теги.
             Список преподавателей должен соответствовать полям list_stuff и stuff_hours
-
         list_tags:
             Список тегов (компетенций) модели. Эта таблица автоматически вычисляется из поля stuff_tags
-            
         courses_tags:
             Матрица соответствия дисциплин тегам. Эта матрица загружается в модель на третьем этапе.
             По строкам - дисциплины, по колонкам - теги.
@@ -55,9 +53,10 @@ class Model(object):
 
         result: 
             В это поле загружается подробный отчет о распределении нагрузки после окончания моделирования.
-            
         solution:
             В это поле сохраняется краткий вектор решения после окончания моделирования
+        last_solution:
+            В этом поле сохраняется нагрузка предыдущего периода.
     """
     def __init__(self):
         self.method_hours = None
@@ -67,7 +66,6 @@ class Model(object):
 
         self.stuff_tags = None
         self.list_tags = None
-
         self.courses_tags = None
 
         self.method_stuff = None
@@ -75,6 +73,8 @@ class Model(object):
 
         self.result = None
         self.solution = None
+
+        self.last_solution = None
 
         self.settings = {
 
@@ -309,7 +309,7 @@ class Model(object):
         supply = self.method_hours.hours.to_dict()  # TODO refactor
         log.debug(supply)
 
-        bars = list(self.list_stuff)
+        bars = list(self.stuff_tags.index)
         log.debug(bars)
 
         demand = self.stuff_hours.opt.to_dict()  # TODO refactor
@@ -350,7 +350,7 @@ class Model(object):
         log.debug("Total Penalty = %.2f", value(prob.objective))
         result = pd.DataFrame(np.array([v.varValue for v in prob.variables()]).reshape((len(warehouses), -1)))
         result.index = self.method_hours.index
-        result.columns = self.list_stuff
+        result.columns = self.stuff_tags.index
         log.info(result)
         log.info(result.sum().sum())
 
@@ -362,8 +362,8 @@ class Model(object):
         """Генерация тестового решения модели. Необходимо для тестирования и воспроизводимости
         """
         log.debug(f"Количество методических единиц: {len(self.method_hours.index)}")
-        log.debug(f"Количество преподавателей: {len(self.list_stuff)}")
-        solution = [i % len(self.list_stuff) for i in range(len(self.method_hours.index))]
+        log.debug(f"Количество преподавателей: {len(self.stuff_tags.index)}")
+        solution = [i % len(self.stuff_tags.index) for i in range(len(self.method_hours.index))]
         self.result = self.evaluate_result(solution)
         self.solution = solution
         log.debug(self.result.sort_index())
