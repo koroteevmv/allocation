@@ -17,33 +17,28 @@ class Model(object):
     """ Класс модели рассчета параметров нагрузки
     
     Свойства:
+        method_hours:
+            Расчетная матрица методических единиц. Она вычисляется из нагрузки в процессе загрузки.
+            Ее смысл - разделить часы в дисциплине на лекции, семинары.
+            При расчете этой таблицы используются настройки - кому какие часы записывать.
+            Это позволяет группировать нагрузку и не делить ее больше необходимого.
+        list_courses:
+            Список дисциплин модели. Краткий перечень именно по дисциплинам.
+            Эта таблица вычисляется из списка нагрузки по дисциплинам.
+
         stuff_hours:
             Матрица нагрузки преподавателей. Эта таблица загружается в модель на первом этапе.
             Колонки:
                 индекс - имя преподавателя
                 hours - часов нагрузки по плану. Это максимальное количество. Лучше его не превышать.
 
-        method_hours:
-            Расчетная матрица методических единиц. Она вычисляется из нагрузки в процессе загрузки. 
-            Ее смысл - разделить часы в дисциплине на лекции, семинары. 
-            При расчете этой таблицы используются настройки - кому какие часы записывать. 
-            Это позволяет группировать нагрузку и не делить ее больше необходимого.
-                
-        list_courses: 
-            Список дисциплин модели. Краткий перечень именно по дисциплинам. 
-            Эта таблица вычисляется из списка нагрзуки по дисциплинам.
-            
-        list_stuff:
-            Список преподавателей модели. Эта таблица вычисляется из поля stuff_hours и в дальнейшем
-            держится в актуальном состоянии (например, при добавлении преподавателей из таблицы предпочтений).
-
-        stuff_tag:
+        stuff_tags:
             Таблица соответствия преподавателей тегам. Эта матрица загружается в модель на втором этапе.
             По строкам - преподаватели, по колонкам - теги.
             Список преподавателей должен соответствовать полям list_stuff и stuff_hours
 
         list_tags:
-            Список тегов (компетенций) модели. Эта таблица автоматически вычисляется из поля stuff_tag
+            Список тегов (компетенций) модели. Эта таблица автоматически вычисляется из поля stuff_tags
             
         courses_tags:
             Матрица соответствия дисциплин тегам. Эта матрица загружается в модель на третьем этапе.
@@ -56,7 +51,7 @@ class Model(object):
         method_stuff:
             Соответствие преподавателей методическим единицам (итоговая матрица штрафов).
             Эта таблица автоматически вычисляется из полей
-            method_tags и stuff_tag
+            method_tags и stuff_tags
 
         result: 
             В это поле загружается подробный отчет о распределении нагрузки после окончания моделирования.
@@ -65,15 +60,15 @@ class Model(object):
             В это поле сохраняется краткий вектор решения после окончания моделирования
     """
     def __init__(self):
-        self.list_courses = None
-        self.list_stuff = None
-        self.list_tags = None
-
         self.method_hours = None
+        self.list_courses = None
+
         self.stuff_hours = None
 
+        self.stuff_tags = None
+        self.list_tags = None
+
         self.courses_tags = None
-        self.stuff_tag = None
 
         self.method_stuff = None
         self.method_tags = None
@@ -171,13 +166,6 @@ class Model(object):
         """ Чтение матрицы нагрузки по преподавателям
         """
         res = res[~res.index.duplicated(keep='last')]
-        if self.list_stuff is None:
-            self.list_stuff = res.index
-            log.info("Заполнен список преподавателей")
-        else:
-            if not self.list_stuff.equals(res.index):
-                log.warning("Список преподавателей отличается:", self.list_stuff, res.index)
-                raise ValueError
 
         if len(res.columns) == 1:
             res.columns = ['opt']
@@ -185,6 +173,42 @@ class Model(object):
 
         self.stuff_hours = res
         log.debug(self.stuff_hours)
+        return self
+
+    def read_stuff_tag(self, res):
+        """ Чтение матрицы соответствия преподаватель-тег
+        """
+        log.info("Прочтена матрица преподаватель-тег")
+        res = res[~res.index.duplicated(keep='last')]
+
+        if not self.stuff_hours.index.equals(res.index.drop_duplicates()):
+            log.warning("Список преподавателей отличается.")
+            one, two = set(self.stuff_hours.index), set(res.index.drop_duplicates())
+            log.warning("В модели отсутствует информация о следующих преподавателях:")
+            [log.warning(f"\t{x}") for x in sorted(two.difference(one))]
+            log.warning("Их нагрузка не будет учтена.\n")
+            log.warning("В предпочтениях отсутствует информация о следующих преподавателях:")
+            [log.warning(f"\t{x}") for x in sorted(one.difference(two))]
+            log.warning("Их предпочтения не будут учтены.")
+
+            combined = sorted(one.union(two))
+            self.stuff_hours = self.stuff_hours.reindex(combined).fillna(0)
+            res = res.reindex(self.stuff_hours.index).fillna(0.5)
+
+        if self.list_tags is None:
+            self.list_tags = pd.DataFrame(res.columns, columns=['tag'])
+            self.list_tags["parent"] = None
+            log.info("Заполнен список тегов")
+            log.debug(self.list_tags)
+        else:
+            if not self.list_tags.tag.equals(pd.Series(res.columns)):
+                log.warning("Список тегов отличается.")
+                raise ValueError
+            else:
+                log.warning("Список тегов совпадает.")
+
+        self.stuff_tags = res
+        log.debug(self.stuff_tags)
         return self
 
     def read_courses_tags(self, res):
@@ -212,54 +236,14 @@ class Model(object):
         log.debug(self.courses_tags)
         return self
 
-    def read_stuff_tag(self, res):
-        """ Чтение матрицы соответствия преподаватель-тег
-        """
-        log.info("Прочтена матрица преподаватель-тег")
-        res = res[~res.index.duplicated(keep='last')]
-        if self.list_stuff is None:
-            self.list_stuff = res.index.drop_duplicates()
-            log.info("Заполнен список преподавателей")
-        else:
-            if not self.list_stuff.equals(res.index.drop_duplicates()):
-                log.warning("Список преподавателей отличается.")
-                one, two = set(self.list_stuff), set(res.index.drop_duplicates())
-                log.warning("В модели отсутствует информация о следующих преподавателях:")
-                [log.warning(f"\t{x}") for x in sorted(two.difference(one))]
-                log.warning("Их нагрузка не будет учтена.\n")
-                log.warning("В предпочтениях отсутствует информация о следующих преподавателях:")
-                [log.warning(f"\t{x}") for x in sorted(one.difference(two))]
-                log.warning("Их предпочтения не будут учтены.")
-
-                combined = sorted(one.union(two))
-                self.stuff_hours = self.stuff_hours.reindex(combined).fillna(0)
-                res = res.reindex(self.stuff_hours.index).fillna(0.5)
-                self.list_stuff = self.stuff_hours.index
-
-        if self.list_tags is None:
-            self.list_tags = pd.DataFrame(res.columns, columns=['tag'])
-            self.list_tags["parent"] = None
-            log.info("Заполнен список тегов")
-            log.debug(self.list_tags)
-        else:
-            if not self.list_tags.tag.equals(pd.Series(res.columns)):
-                log.warning("Список тегов отличается.")
-                raise ValueError
-            else:
-                log.warning("Список тегов совпадает.")
-
-        self.stuff_tag = res
-        log.debug(self.stuff_tag)
-        return self
-
     def calc_courses_tags(self):
-        """Вычисление матрицы courses_tags из поля stuff_tag.
+        """Вычисление матрицы courses_tags из поля stuff_tags.
 
-        Использование данного метода предполагает, что в поле stuff_tag в качестве тегов используются
+        Использование данного метода предполагает, что в поле stuff_tags в качестве тегов используются
         названия дисциплин
         """
         log.info("Запущен процесс генерации единичной матрицы дисциплин")
-        log.debug(self.stuff_tag)
+        log.debug(self.stuff_tags)
         log.debug(self.list_tags)
         log.debug(self.list_courses)
         log.debug(self.method_hours)
@@ -273,10 +257,10 @@ class Model(object):
             log.warning("В дисциплинах отсутствует информация о следующих тегах:")
             [log.warning(f"\t{x}") for x in sorted(one.difference(two))]
 
-            log.debug(self.stuff_tag.shape)
-            self.stuff_tag = (self.stuff_tag.T.reindex(self.list_courses).fillna(0.0)).T
-            log.debug(self.stuff_tag)
-            log.debug(self.stuff_tag.shape)
+            log.debug(self.stuff_tags.shape)
+            self.stuff_tags = (self.stuff_tags.T.reindex(self.list_courses).fillna(0.0)).T
+            log.debug(self.stuff_tags)
+            log.debug(self.stuff_tags.shape)
             # self.list_tags = self.list_courses
             self.list_tags = pd.DataFrame(list(self.list_courses), columns=['tag'])
             self.list_tags["parent"] = None
@@ -302,9 +286,9 @@ class Model(object):
         log.info("Вычисляется итоговая матрица штрафов")
         log.debug(self.list_tags)
 
-        log.debug(self.stuff_tag)
+        log.debug(self.stuff_tags)
         log.debug(self.method_tags)
-        method_stuff = self.stuff_tag.dot(self.method_tags.T)
+        method_stuff = self.stuff_tags.dot(self.method_tags.T)
         method_stuff = method_stuff.T.iloc[:, :].div(res.T.sum(axis=0), axis=0)
         log.info("Вычислена итоговая матрица штрафов")
         self.method_stuff = method_stuff
@@ -421,20 +405,20 @@ class Model(object):
                 series = list(self.evaluate_result(offspring[chromosome_idx])["fitness"])
                 fitness_sorted = sorted(list(range(len(series))), key=lambda k: series[k])
                 random_gene_idx = np.random.choice(fitness_sorted[:25])
-                offspring[chromosome_idx, random_gene_idx] = randint(0, len(self.list_stuff) - 1)
+                offspring[chromosome_idx, random_gene_idx] = randint(0, len(self.stuff_hours.index) - 1)
             return offspring
 
         log.debug(f"Количество методических единиц: {len(self.method_hours.index)}")
-        log.debug(f"Количество преподавателей: {len(self.list_stuff)}")
+        log.debug(f"Количество преподавателей: {len(self.stuff_hours.index)}")
         ga_instance = pygad.GA(num_generations=generations,
                                num_parents_mating=int(population / 2),
                                sol_per_pop=population,
 
                                num_genes=len(self.method_hours.index),
                                init_range_low=0,
-                               init_range_high=len(self.list_stuff),
+                               init_range_high=len(self.stuff_hours.index),
                                random_mutation_min_val=0,
-                               random_mutation_max_val=len(self.list_stuff),
+                               random_mutation_max_val=len(self.stuff_hours.index),
                                gene_type=int,
 
                                fitness_func=fitness,
@@ -459,11 +443,11 @@ class Model(object):
         :param solution:
         :return:
         """
-        res = pd.DataFrame(index=range(len(self.method_hours.index)), columns=range(len(self.list_stuff))).fillna(0)
+        res = pd.DataFrame(index=range(len(self.method_hours.index)), columns=range(len(self.stuff_hours.index))).fillna(0)
         for method, prep in enumerate(solution):
             res.loc[method, prep] = self.method_hours.hours.loc[method]
         res.index = self.method_hours.index
-        res.columns = self.list_stuff
+        res.columns = self.stuff_hours.index
 
         series = pd.DataFrame(solution, columns=['stuff'])
         series.index = self.method_hours.index

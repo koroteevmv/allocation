@@ -48,7 +48,7 @@ def model(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    log.debug(model.stuff_tag)
+    log.debug(model.stuff_tags)
     stuff = ''
     hours_stuff = 0
     num_stuff = 0
@@ -77,7 +77,7 @@ def model(name):
     except:
         tags = 0
     try:
-        matrix = model.stuff_tag.iloc[:, 0:15].style.format('<span>{}<span>').render()
+        matrix = model.stuff_tags.iloc[:, 0:15].style.format('<span>{}<span>').render()
     except AttributeError:
         matrix = ''
 
@@ -106,7 +106,7 @@ def dwn(name, component):
     elif component == "tags":
         res = model.courses_tags
     elif component == "matrix":
-        res = model.stuff_tag
+        res = model.stuff_tags
     elif component == "stuff_tags_tmpl":
         res = pd.DataFrame(
             index=model.list_stuff,
@@ -230,11 +230,11 @@ def stuff_tags(name):
             pickle.dump(model, f)
         return redirect(request.url)
 
-    log.debug(model.stuff_tag)
+    log.debug(model.stuff_tags)
 
     try:
-        matrix = model.stuff_tag.iloc[:, :10].to_html(index=True, table_id="T_my_id", classes='table table-striped',
-                                                      border=0)
+        matrix = model.stuff_tags.iloc[:, :10].to_html(index=True, table_id="T_my_id", classes='table table-striped',
+                                                       border=0)
     except AttributeError:
         matrix = ''
 
@@ -332,12 +332,16 @@ def tags(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    model.calc_courses_tags()
+    # model.calc_courses_tags()
+
+    data = model.courses_tags.to_json(force_ascii=False)
+    log.debug(data)
 
     # with open(filename, 'wb') as f:
     #     pickle.dump(model, f)
     return render_template('tags.html',
                            name=name,
+                           data=data,
                            )
 
 
@@ -347,7 +351,7 @@ def find_stuff(name):
     with open(filename, 'rb') as f:
         model = pickle.load(f)
 
-    res = model.stuff_tag.dot(model.courses_tags.T).T.iloc[:, :].div(model.courses_tags.T.sum(axis=0), axis=0)
+    res = model.stuff_tags.dot(model.courses_tags.T).T.iloc[:, :].div(model.courses_tags.T.sum(axis=0), axis=0)
     res = res.melt(ignore_index=False)
     res = res.reset_index()
     res = res[res.value > 0]
@@ -372,10 +376,10 @@ def head_hunt(name):
     res = pd.DataFrame(index=model.list_tags.tag, columns=["Компетенция", "Требуется", "Есть", "Дефицит"])
     res["Компетенция"] = res.index
     res["Требуется"] = (model.courses_tags.T.dot(model.method_hours.groupby("course").sum()))['hours']
-    # log.debug(model.stuff_tag)
+    # log.debug(model.stuff_tags)
     # log.debug(model.stuff_hours)
-    # log.debug(model.stuff_tag.T.dot(model.stuff_hours))
-    res["Есть"] = (model.stuff_tag.T.dot(model.stuff_hours))['opt']
+    # log.debug(model.stuff_tags.T.dot(model.stuff_hours))
+    res["Есть"] = (model.stuff_tags.T.dot(model.stuff_hours))['opt']
     res["Дефицит"] = res["Есть"] - res["Требуется"]
     # log.debug(res)
     res = res.to_html(index=False, table_id="T_my_id2",

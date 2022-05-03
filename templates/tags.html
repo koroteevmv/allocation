@@ -16,39 +16,60 @@
         <p>Double click to edit the label of a node.</p>
 
         <ul id="dragRoot">
-            <li><i class="icon-building"></i> <span class="node-facility">Facility F1</span>
-                <ul>
-                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A</span>
-                        <ul>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A1</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A2</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A3</span></li>
-                        </ul>
-                    </li>
-                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B</span>
-                        <ul>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B1</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B2</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B3</span></li>
-                        </ul>
-                    </li>
-                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C</span>
-                        <ul>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C1</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C2</span></li>
-                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C3</span></li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li><i class="icon-building"></i> <span class="node-facility">Facility F2</span></li>
-            <li><i class="icon-building"></i> <span class="node-facility">Facility F3</span></li>
+{#            <li><i class="icon-building"></i> <span class="node-facility">Facility F1</span>#}
+{#                <ul>#}
+{#                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A</span>#}
+{#                        <ul>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A1</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A2</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment A3</span></li>#}
+{#                        </ul>#}
+{#                    </li>#}
+{#                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B</span>#}
+{#                        <ul>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B1</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B2</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment B3</span></li>#}
+{#                        </ul>#}
+{#                    </li>#}
+{#                    <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C</span>#}
+{#                        <ul>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C1</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C2</span></li>#}
+{#                            <li><i class="icon-hdd"></i> <span class="node-cpe">Example Equipment C3</span></li>#}
+{#                        </ul>#}
+{#                    </li>#}
+{#                </ul>#}
+{#            </li>#}
+{#            <li><i class="icon-building"></i> <span class="node-facility">Facility F2</span></li>#}
+{#            <li><i class="icon-building"></i> <span class="node-facility">Facility F3</span></li>#}
         </ul>
 
     </section>
 
 </div>
 <script>
+
+    let data = {{ data|safe }};
+    console.log(data);
+
+    for(var k in data) {
+       console.log(k, data[k]);
+       let elem = document.createElement('li');
+       elem.innerHTML = `<i class\"icon-building"></i> <span class="node-facility">${k}</span>`;
+       let list = document.createElement('ul');
+       for(var child in data[k]){
+           console.log(child, data[k][child]);
+           if (data[k][child] > 0) {
+               let inner = document.createElement('li');
+               inner.innerHTML += `<i class="icon-hdd"></i> <span class="node-cpe">${child}</span>`;
+               list.appendChild(inner);
+           }
+       }
+       elem.appendChild(list);
+       document.getElementById("dragRoot").appendChild(elem);
+    }
+
     var DragAndDrop = (function (DragAndDrop) {
 
         function shouldAcceptDrop(item) {
